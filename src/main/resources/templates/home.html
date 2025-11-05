@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="utf-8"/><title>Home</title></head>
+<body style="font-family: Arial, Helvetica, sans-serif; padding:20px;">
+  <div style="max-width:800px; margin:0 auto;">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <h2>Hello <span th:text="${username}">User</span></h2>
+      <a href="/logout" style="padding:8px 12px; border-radius:4px; text-decoration:none; border:1px solid #333;">Logout</a>
+    </div>
+    <p>Welcome to the home page.</p>
+  </div>
+</body>
+</html>
