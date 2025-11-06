@@ -1,128 +1,89 @@
 <!DOCTYPE html>
-<html lang="en">
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Register</title>
+    <title>Register - SSO Portal</title>
     <style>
         body {
-          font-family: Arial, sans-serif;
-          background: #f4f6f8;
-          margin: 0;
-          padding: 0;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          height: 100vh;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(120deg, #00b4d8, #90e0ef);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
         }
-
         .container {
-          background: white;
-          width: 350px;
-          padding: 30px;
-          border-radius: 10px;
-          box-shadow: 0 0 10px rgba(0,0,0,0.1);
-          text-align: center;
+            background: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            width: 380px;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.2);
+            text-align: center;
         }
-
-        h2 {
-          margin-bottom: 20px;
-        }
-
+        h2 { color: #0078d7; }
         input {
-          width: 100%;
-          padding: 10px;
-          margin: 8px 0;
-          border: 1px solid #ccc;
-          border-radius: 5px;
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            border-radius: 6px;
+            border: 1px solid #ccc;
         }
-
         button {
-          width: 100%;
-          padding: 10px;
-          background: #0078d7;
-          color: white;
-          border: none;
-          border-radius: 5px;
-          cursor: pointer;
-          margin-top: 10px;
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            background: #0078d7;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
         }
-
-        button:hover {
-          background: #005fa3;
-        }
-
-        .message {
-          margin-top: 10px;
-          font-size: 0.9em;
-        }
-
-        a {
-          color: #0078d7;
-          text-decoration: none;
-        }
-
-        a:hover {
-          text-decoration: underline;
-        }
+        button:hover { background: #005fa3; }
+        .message { font-size: 0.9em; margin-top: 5px; }
+        a { color: #0078d7; text-decoration: none; font-size: 14px; }
     </style>
 </head>
 <body>
+
 <div class="container">
-    <h2>Create Account</h2>
-    <input type="text" id="username" placeholder="Username" required />
-    <input type="email" id="email" placeholder="Email" required />
-    <input type="password" id="password" placeholder="Password" required />
-    <input type="password" id="confirmPassword" placeholder="Confirm Password" required />
-    <button onclick="register()">Register</button>
-    <div class="message" id="msg"></div>
-    <p>Already have an account? <a href="login.html">Login</a></p>
+    <h2>Create an Account</h2>
+
+    <form th:action="@{/auth/register}" method="post" id="registerForm">
+        <input type="text" name="username" placeholder="Username" required/>
+        <input type="email" name="email" placeholder="Email" required/>
+        <input type="password" name="password" placeholder="Password" required/>
+        <input type="password" name="confirmPassword" placeholder="Confirm Password" required/>
+        <button type="submit">Register</button>
+    </form>
+
+    <p class="message" id="msg"></p>
+    <p>Already have an account? <a th:href="@{/login}">Login</a></p>
 </div>
 
 <script>
-    function register() {
-      const username = document.getElementById("username").value.trim();
-      const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value.trim();
-      const confirmPassword = document.getElementById("confirmPassword").value.trim();
-      const msg = document.getElementById("msg");
+    const form = document.getElementById("registerForm");
+    const msg = document.getElementById("msg");
 
-      msg.style.color = "red";
+    form.addEventListener("submit", function(e) {
+        const pass = form.password.value;
+        const confirm = form.confirmPassword.value;
 
-      if (!username || !email || !password || !confirmPassword) {
-        msg.textContent = "Please fill in all fields.";
-        return;
-      }
-
-      if (password.length < 6) {
-        msg.textContent = "Password must be at least 6 characters.";
-        return;
-      }
-
-      if (password !== confirmPassword) {
-        msg.textContent = "Passwords do not match.";
-        return;
-      }
-
-      if (localStorage.getItem(username)) {
-        msg.textContent = "Username already exists.";
-        return;
-      }
-
-      const user = { username, email, password };
-      localStorage.setItem(username, JSON.stringify(user));
-
-      msg.style.color = "green";
-      msg.textContent = "Registration successful! Redirecting to login...";
-
-      setTimeout(() => {
-        window.location.href = "login.html";
-      }, 2000);
-    }
-
-    // Redirect if already logged in
-    if (localStorage.getItem("loggedInUser")) {
-      window.location.href = "home.html";
-    }
+        if (pass !== confirm) {
+            e.preventDefault();
+            msg.style.color = "red";
+            msg.textContent = "Passwords do not match!";
+        } else if (pass.length < 6) {
+            e.preventDefault();
+            msg.style.color = "red";
+            msg.textContent = "Password must be at least 6 characters.";
+        } else {
+            msg.style.color = "green";
+            msg.textContent = "Processing registration...";
+        }
+    });
 </script>
+
 </body>
 </html>

@@ -1,161 +1,79 @@
 <!DOCTYPE html>
-<html lang="en">
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Admin Dashboard - SSO & User Management</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-        body {
-            font-family: "Segoe UI", Arial, sans-serif;
-            background: #f3f5f7;
-            margin: 0;
-            padding: 0;
-        }
-        header {
-            background: #2c3e50;
-            color: #fff;
-            padding: 15px 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+        body { font-family: "Segoe UI", Arial, sans-serif; background: #f3f5f7; margin: 0; padding: 0; }
+        header { background: #2c3e50; color: #fff; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; }
         header h1 { margin: 0; font-size: 20px; }
-        nav {
-            display: flex;
-            background: #34495e;
-        }
-        nav button {
-            flex: 1;
-            border: none;
-            background: #34495e;
-            color: #ecf0f1;
-            padding: 14px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        nav button.active {
-            background: #1abc9c;
-            color: #fff;
-        }
-        .tab-content {
-            display: none;
-            padding: 25px;
-        }
+        nav { display: flex; background: #34495e; }
+        nav button { flex: 1; border: none; background: #34495e; color: #ecf0f1; padding: 14px; cursor: pointer; font-size: 16px; }
+        nav button.active { background: #1abc9c; color: #fff; }
+        .tab-content { display: none; padding: 25px; }
         .tab-content.active { display: block; }
-        table {
-            border-collapse: collapse;
-            width: 100%;
-            background: #fff;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 10px;
-            text-align: left;
-        }
-        th {
-            background: #2c3e50;
-            color: #fff;
-        }
-        button.action {
-            background: #1abc9c;
-            border: none;
-            padding: 6px 10px;
-            color: white;
-            cursor: pointer;
-            border-radius: 4px;
-        }
-        button.danger {
-            background: #e74c3c;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        input, select, textarea {
-            padding: 8px;
-            width: 100%;
-            box-sizing: border-box;
-            margin-top: 5px;
-        }
-        .modal {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.4);
-            justify-content: center;
-            align-items: center;
-        }
-        .modal-content {
-            background: white;
-            padding: 20px;
-            width: 400px;
-            border-radius: 6px;
-        }
-        .close {
-            float: right;
-            cursor: pointer;
-            color: #e74c3c;
-            font-weight: bold;
-        }
+        table { border-collapse: collapse; width: 100%; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background: #2c3e50; color: #fff; }
+        button.action { background: #1abc9c; border: none; padding: 6px 10px; color: white; cursor: pointer; border-radius: 4px; margin: 2px; }
+        button.danger { background: #e74c3c; }
+        .form-group { margin-bottom: 15px; }
+        label, input, select, textarea { padding: 8px; width: 100%; box-sizing: border-box; margin-top: 5px; border-radius: 4px; border: 1px solid #ccc; }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); justify-content: center; align-items: center; z-index: 100; }
+        .modal-content { background: white; padding: 20px; width: 500px; border-radius: 6px; }
+        .close { float: right; cursor: pointer; color: #e74c3c; font-weight: bold; font-size: 20px; }
     </style>
 </head>
 <body>
 
 <header>
     <h1>Admin Dashboard</h1>
-    <div>Welcome, <span id="adminName">Admin</span></div>
+    <div>Welcome, <span sec:authentication="name">Admin</span>!</div>
 </header>
 
 <nav>
-    <button class="tab-button active" data-tab="welcome">Welcome</button>
-    <button class="tab-button" data-tab="users">User Management</button>
-    <button class="tab-button" data-tab="sso-saml">SAML Config</button>
-    <button class="tab-button" data-tab="sso-oidc">OIDC Config</button>
-    <button class="tab-button" data-tab="sso-jwt">JWT Config</button>
+    <button class="tab-button active" data-tab="users">User Management</button>
+    <button class="tab-button" data-tab="sso">SSO Configuration</button>
+    <button class="tab-button" data-tab="logout" onclick="document.getElementById('logoutForm').submit();">Logout</button>
 </nav>
 
-<!-- ===================== Welcome Tab ===================== -->
-<section id="welcome" class="tab-content active">
-    <h2>Welcome</h2>
-    <p>This is your administrative control panel for managing users and Single Sign-On (SSO) configurations.</p>
-    <p>Use the navigation tabs above to switch between sections.</p>
-</section>
+<form id="logoutForm" th:action="@{/logout}" method="post" style="display:none;"></form>
 
-<!-- ===================== User Management Tab ===================== -->
-<section id="users" class="tab-content">
+<section id="users" class="tab-content active">
     <h2>User Management</h2>
-    <button class="action" onclick="openUserModal()">+ Add User</button>
+    <button class="action" onclick="openUserModal(null)">+ Add User</button>
     <br><br>
     <table id="usersTable">
         <thead>
         <tr>
-            <th>ID</th><th>Username</th><th>Email</th><th>First Name</th><th>Last Name</th><th>Roles</th><th>Provider</th><th>Actions</th>
+            <th>ID</th><th>Username</th><th>Email</th><th>Roles</th><th>Provider</th><th>Actions</th>
         </tr>
         </thead>
         <tbody></tbody>
     </table>
 </section>
 
-<!-- ===================== SSO Config Tabs ===================== -->
-<section id="sso-saml" class="tab-content">
-    <h2>SAML Configuration</h2>
-    <div id="samlConfigs"></div>
+<section id="sso" class="tab-content">
+    <h2>SSO Configuration</h2>
+    <button class="action" onclick="openSsoModal(null)">+ Add SSO Config</button>
+    <br><br>
+    <table id="ssoTable">
+        <thead>
+        <tr>
+            <th>Provider ID</th><th>Type</th><th>Display Name</th><th>Enabled</th><th>Has Secret</th><th>Actions</th>
+        </tr>
+        </thead>
+        <tbody id="ssoTbody"></tbody>
+    </table>
 </section>
 
-<section id="sso-oidc" class="tab-content">
-    <h2>OIDC Configuration</h2>
-    <div id="oidcConfigs"></div>
-</section>
 
-<section id="sso-jwt" class="tab-content">
-    <h2>JWT Configuration</h2>
-    <div id="jwtConfigs"></div>
-</section>
-
-<!-- ===================== Add/Edit User Modal ===================== -->
 <div class="modal" id="userModal">
     <div class="modal-content">
-        <span class="close" onclick="closeUserModal()">&times;</span>
+        <span class="close" onclick="closeModal('userModal')">&times;</span>
         <h3 id="userModalTitle">Add User</h3>
+        <input type="hidden" id="userIdInput">
         <div class="form-group">
             <label>Username</label>
             <input type="text" id="usernameInput">
@@ -165,126 +83,283 @@
             <input type="email" id="emailInput">
         </div>
         <div class="form-group">
-            <label>Password</label>
+            <label>Password (leave blank to keep unchanged)</label>
             <input type="password" id="passwordInput">
+        </div>
+        <div class="form-group">
+            <label>Roles (comma-separated, e.g., ROLE_USER,ROLE_ADMIN)</label>
+            <input type="text" id="rolesInput">
         </div>
         <button class="action" onclick="saveUser()">Save</button>
     </div>
 </div>
 
+<div class="modal" id="ssoModal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal('ssoModal')">&times;</span>
+        <h3 id="ssoModalTitle">Add SSO Config</h3>
+        <input type="hidden" id="ssoIdInput">
+        <div class="form-group">
+            <label>Provider ID (e.g., 'google', 'miniorange-saml')</label>
+            <input type="text" id="ssoProviderIdInput">
+        </div>
+        <div class="form-group">
+            <label>Type</label>
+            <select id="ssoTypeInput">
+                <option value="OIDC">OIDC</option>
+                <option value="SAML">SAML</option>
+                <option value="JWT">JWT</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Display Name (e.g., 'Login with Google')</label>
+            <input type="text" id="ssoDisplayNameInput">
+        </div>
+        <div class="form-group">
+            <label>Enabled</label>
+            <select id="ssoEnabledInput">
+                <option value="true">True</option>
+                <option value="false">False</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Settings (JSON)</label>
+            <textarea id="ssoSettingsInput" rows="10" placeholder='{ "clientId": "...", "clientSecret": "...", "issuer": "..." }'></textarea>
+        </div>
+        <button class="action" onclick="saveSsoConfig()">Save</button>
+    </div>
+</div>
+
 <script>
     const apiBase = '/api/admin';
+    let currentEditUser = null;
+    let currentEditSso = null;
 
     // ======= TAB NAVIGATION =======
     document.querySelectorAll('.tab-button').forEach(btn => {
         btn.addEventListener('click', () => {
+            if (btn.dataset.tab === 'logout') return;
             document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
             btn.classList.add('active');
             document.getElementById(btn.dataset.tab).classList.add('active');
-            if (btn.dataset.tab === 'users') loadUsers();
-            if (btn.dataset.tab.startsWith('sso')) loadSsoConfigs();
         });
     });
 
+    // ======= MODAL CONTROLS =======
+    function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
     // ======= USER MANAGEMENT =======
     async function loadUsers() {
-        const res = await fetch(`${apiBase}/users`);
-        const data = await res.json();
-        const tbody = document.querySelector('#usersTable tbody');
-        tbody.innerHTML = '';
-        data.content.forEach(u => {
-            const row = `<tr>
-                <td>${u.id}</td><td>${u.username}</td><td>${u.email}</td>
-                <td>${u.firstName||''}</td><td>${u.lastName||''}</td>
-                <td>${(u.roles||[]).join(', ')}</td><td>${u.provider}</td>
-                <td>
-                    <button class="action" onclick="editUser(${u.id}, '${u.username}', '${u.email}')">Edit</button>
-                    <button class="action danger" onclick="deleteUser(${u.id})">Delete</button>
-                </td></tr>`;
-            tbody.innerHTML += row;
-        });
+        try {
+            const res = await fetch(`${apiBase}/users`);
+            if (!res.ok) throw new Error(`Failed to fetch users: ${res.statusText}`);
+            const data = await res.json();
+            const tbody = document.querySelector('#usersTable tbody');
+            tbody.innerHTML = '';
+            data.content.forEach(u => {
+                const row = `<tr>
+                    <td>${u.id}</td><td>${u.username}</td><td>${u.email}</td>
+                    <td>${(u.roles || []).join(', ')}</td><td>${u.provider}</td>
+                    <td>
+                        <button class="action" onclick='openUserModal(${JSON.stringify(u)})'>Edit</button>
+                        <button class="action danger" onclick="deleteUser(${u.id})">Delete</button>
+                    </td></tr>`;
+                tbody.innerHTML += row;
+            });
+        } catch (e) { console.error(e); alert('Error loading users.'); }
     }
 
-    function openUserModal() {
-        document.getElementById('userModal').style.display = 'flex';
-    }
-
-    function closeUserModal() {
-        document.getElementById('userModal').style.display = 'none';
+    function openUserModal(user) {
+        currentEditUser = user;
+        if (user) {
+            document.getElementById('userModalTitle').textContent = 'Edit User';
+            document.getElementById('userIdInput').value = user.id;
+            document.getElementById('usernameInput').value = user.username;
+            document.getElementById('emailInput').value = user.email;
+            document.getElementById('rolesInput').value = (user.roles || []).join(', ');
+            document.getElementById('passwordInput').placeholder = 'Leave blank to keep unchanged';
+        } else {
+            document.getElementById('userModalTitle').textContent = 'Add User';
+            document.getElementById('userIdInput').value = '';
+            document.getElementById('usernameInput').value = '';
+            document.getElementById('emailInput').value = '';
+            document.getElementById('rolesInput').value = 'ROLE_USER';
+            document.getElementById('passwordInput').placeholder = 'Password';
+        }
+        document.getElementById('passwordInput').value = ''; // Clear password field
+        openModal('userModal');
     }
 
     async function saveUser() {
-        const username = document.getElementById('usernameInput').value;
-        const email = document.getElementById('emailInput').value;
+        const id = document.getElementById('userIdInput').value;
+        const isUpdate = !!id;
+        const method = isUpdate ? 'PUT' : 'POST';
+        const url = isUpdate ? `${apiBase}/users/${id}` : `${apiBase}/users`;
+
+        const roles = document.getElementById('rolesInput').value.split(',')
+            .map(r => r.trim()).filter(r => r.length > 0);
+
+        const body = {
+            username: document.getElementById('usernameInput').value,
+            email: document.getElementById('emailInput').value,
+            roles: roles,
+            provider: 'LOCAL'
+        };
+
         const password = document.getElementById('passwordInput').value;
-        await fetch(`${apiBase}/users`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({username, email, password, provider:'local'})
-        });
-        closeUserModal();
-        loadUsers();
+        if (password) {
+            body.password = password;
+        }
+
+        try {
+            const res = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            if (!res.ok) throw new Error(await res.text());
+            closeModal('userModal');
+            loadUsers();
+        } catch (e) { console.error(e); alert('Error saving user: ' + e.message); }
     }
 
     async function deleteUser(id) {
         if (confirm('Are you sure you want to delete this user?')) {
-            await fetch(`${apiBase}/users/${id}`, {method: 'DELETE'});
-            loadUsers();
+            try {
+                await fetch(`${apiBase}/users/${id}`, { method: 'DELETE' });
+                loadUsers();
+            } catch (e) { console.error(e); alert('Error deleting user.'); }
         }
     }
 
     // ======= SSO CONFIG MANAGEMENT =======
     async function loadSsoConfigs() {
-        const res = await fetch(`${apiBase}/sso-config`);
-        const configs = await res.json();
-        const byType = { SAML: [], OIDC: [], JWT: [] };
-        configs.forEach(c => byType[c.type]?.push(c));
-
-        renderSsoList('samlConfigs', byType.SAML);
-        renderSsoList('oidcConfigs', byType.OIDC);
-        renderSsoList('jwtConfigs', byType.JWT);
+        try {
+            const res = await fetch(`${apiBase}/sso-config`);
+            if (!res.ok) throw new Error('Failed to fetch SSO configs');
+            const configs = await res.json();
+            const tbody = document.getElementById('ssoTbody');
+            tbody.innerHTML = '';
+            configs.forEach(cfg => {
+                const row = `<tr>
+                    <td>${cfg.providerId}</td>
+                    <td>${cfg.type}</td>
+                    <td>${cfg.displayName || '-'}</td>
+                    <td>${cfg.enabled}</td>
+                    <td>${cfg.hasSecret}</td>
+                    <td>
+                        <button class="action" onclick='openSsoModal(${JSON.stringify(cfg)})'>Edit</button>
+                        <button class="action" onclick='revealSsoSecret(${cfg.id})'>Reveal Secret</button>
+                        <button class="action danger" onclick="deleteSso(${cfg.id})">Delete</button>
+                    </td></tr>`;
+                tbody.innerHTML += row;
+            });
+        } catch (e) { console.error(e); alert('Error loading SSO configs.'); }
     }
 
-    function renderSsoList(containerId, list) {
-        const div = document.getElementById(containerId);
-        if (!list.length) {
-            div.innerHTML = `<p>No configurations found.</p>`;
+    function openSsoModal(config) {
+        currentEditSso = config;
+        if (config) {
+            document.getElementById('ssoModalTitle').textContent = 'Edit SSO Config';
+            document.getElementById('ssoIdInput').value = config.id;
+            document.getElementById('ssoProviderIdInput').value = config.providerId;
+            document.getElementById('ssoProviderIdInput').readOnly = true; // Cannot change providerId
+            document.getElementById('ssoTypeInput').value = config.type;
+            document.getElementById('ssoDisplayNameInput').value = config.displayName;
+            document.getElementById('ssoEnabledInput').value = config.enabled;
+            // Sanitize settings: add clientSecret placeholder, remove sensitive data
+            const settings = config.settings || {};
+            if (config.hasSecret) {
+                settings.clientSecret = "********** (hidden) - To change, enter a new secret";
+            }
+            document.getElementById('ssoSettingsInput').value = JSON.stringify(settings, null, 2);
+        } else {
+            document.getElementById('ssoModalTitle').textContent = 'Add SSO Config';
+            document.getElementById('ssoIdInput').value = '';
+            document.getElementById('ssoProviderIdInput').value = '';
+            document.getElementById('ssoProviderIdInput').readOnly = false;
+            document.getElementById('ssoTypeInput').value = 'OIDC';
+            document.getElementById('ssoDisplayNameInput').value = '';
+            document.getElementById('ssoEnabledInput').value = 'true';
+            document.getElementById('ssoSettingsInput').value = `{
+                "clientId": "",
+                "clientSecret": "",
+                "issuer": "https://your-idp.com/issuer-uri"}`; } openModal('ssoModal'); }
+            async function saveSsoConfig() {
+        const id = document.getElementById('ssoIdInput').value;
+        const isUpdate = !!id;
+        const method = isUpdate ? 'PUT' : 'POST';
+        const url = isUpdate ? `${apiBase}/sso-config/${id}` : `${apiBase}/sso-config`;
+
+        let settings;
+        try {
+            settings = JSON.parse(document.getElementById('ssoSettingsInput').value);
+            // If clientSecret is the placeholder, remove it so it's not sent
+            if (isUpdate && settings.clientSecret === "********** (hidden) - To change, enter a new secret") {
+                delete settings.clientSecret;
+            }
+        } catch (e) {
+            alert('Settings is not valid JSON.');
             return;
         }
-        let html = `<table><thead><tr><th>ID</th><th>Provider ID</th><th>Type</th><th>Display Name</th><th>Enabled</th><th>Actions</th></tr></thead><tbody>`;
-        list.forEach(cfg => {
-            html += `<tr>
-                <td>${cfg.id}</td>
-                <td>${cfg.providerId}</td>
-                <td>${cfg.type}</td>
-                <td>${cfg.displayName || '-'}</td>
-                <td>${cfg.enabled}</td>
-                <td>
-                    <button class="action" onclick="toggleSso(${cfg.id}, ${!cfg.enabled})">${cfg.enabled ? 'Disable' : 'Enable'}</button>
-                    <button class="action danger" onclick="deleteSso(${cfg.id})">Delete</button>
-                </td></tr>`;
-        });
-        html += `</tbody></table>`;
-        div.innerHTML = html;
-    }
 
-    async function toggleSso(id, newStatus) {
-        await fetch(`${apiBase}/sso-config/${id}`, {
-            method: 'PUT',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({enabled: newStatus})
-        });
-        loadSsoConfigs();
+        const body = {
+            providerId: document.getElementById('ssoProviderIdInput').value,
+            type: document.getElementById('ssoTypeInput').value,
+            displayName: document.getElementById('ssoDisplayNameInput').value,
+            enabled: document.getElementById('ssoEnabledInput').value === 'true',
+            settings: settings
+        };
+
+        try {
+            const res = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            if (!res.ok) throw new Error(await res.text());
+            closeModal('ssoModal');
+            loadSsoConfigs();
+        } catch (e) { console.error(e); alert('Error saving SSO Config: ' + e.message); }
     }
 
     async function deleteSso(id) {
-        if (confirm('Delete this SSO configuration?')) {
-            await fetch(`${apiBase}/sso-config/${id}`, {method:'DELETE'});
-            loadSsoConfigs();
+        if (confirm('Delete this SSO configuration? This is not reversible.')) {
+            try {
+                await fetch(`${apiBase}/sso-config/${id}`, { method: 'DELETE' });
+                loadSsoConfigs();
+            } catch (e) { console.error(e); alert('Error deleting SSO config.'); }
         }
     }
-</script>
 
+    async function revealSsoSecret(id) {
+        try {
+            const res = await fetch(`${apiBase}/sso-config/${id}/reveal-secret`);
+            const data = await res.json();
+            if (data.error) throw new Error(data.error);
+            if (!data.secret) {
+                alert('This configuration has no secret stored.');
+            } else {
+                alert(`Revealed Secret:\n\n${data.secret}`);
+            }
+        } catch(e) {
+            alert('Failed to reveal secret: ' + e.message);
+        }
+    }
+
+    // Initial load
+    document.addEventListener('DOMContentLoaded', () => {
+        loadUsers();
+        loadSsoConfigs();
+        // Set active tab based on URL hash
+        const hash = window.location.hash.replace('#', '');
+        if (hash) {
+            const btn = document.querySelector(`button[data-tab="${hash}"]`);
+            if(btn) btn.click();
+        }
+    });
+</script>
 </body>
 </html>

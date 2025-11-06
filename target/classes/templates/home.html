@@ -1,135 +1,41 @@
 <!DOCTYPE html>
-<html lang="en">
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Home</title>
+    <title>Home - SSO Portal</title>
     <style>
-        body {
-          font-family: Arial, sans-serif;
-          background: #f4f6f8;
-          margin: 0;
-          padding: 0;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          height: 100vh;
-        }
-
-        .container {
-          background: white;
-          width: 400px;
-          padding: 30px;
-          border-radius: 10px;
-          box-shadow: 0 0 10px rgba(0,0,0,0.1);
-          text-align: center;
-        }
-
-        h2 {
-          margin-bottom: 10px;
-        }
-
-        p {
-          margin-bottom: 15px;
-        }
-
-        input {
-          width: 100%;
-          padding: 10px;
-          margin: 8px 0;
-          border: 1px solid #ccc;
-          border-radius: 5px;
-        }
-
-        button {
-          width: 100%;
-          padding: 10px;
-          background: #0078d7;
-          color: white;
-          border: none;
-          border-radius: 5px;
-          cursor: pointer;
-          margin-top: 10px;
-        }
-
-        button:hover {
-          background: #005fa3;
-        }
-
-        .logout {
-          background: #d9534f;
-        }
-
-        .logout:hover {
-          background: #b52b27;
-        }
-
-        .message {
-          margin-top: 10px;
-          font-size: 0.9em;
-        }
+        body { font-family: "Segoe UI", Arial, sans-serif; background: #f2f5f7; height: 100vh; margin: 0; display: flex; align-items: center; justify-content: center; }
+        .card { background: white; border-radius: 12px; padding: 2rem; width: 420px; text-align: center; box-shadow: 0 8px 18px rgba(0,0,0,0.1); }
+        h2 { color: #0078d7; }
+        p { color: #333; }
+        strong { text-transform: uppercase; }
+        button { padding: 10px 15px; border: none; border-radius: 6px; color: white; cursor: pointer; margin-top: 15px; font-weight: bold; }
+        .logout { background: #d9534f; }
+        .admin { background: #0078d7; }
+        button:hover { opacity: 0.9; }
     </style>
 </head>
 <body>
-<div class="container">
-    <h2>Welcome, <span id="userDisplay"></span>!</h2>
-    <p>Email: <span id="userEmail"></span></p>
 
-    <h3>Update Info</h3>
-    <input type="text" id="newEmail" placeholder="New Email" />
-    <input type="password" id="newPassword" placeholder="New Password" />
-    <button onclick="updateInfo()">Update</button>
+<div class="card">
+    <h2>Welcome, <span th:text="${user.username}">User</span>!</h2>
 
-    <div class="message" id="msg"></div>
+    <p>Email: <span th:text="${user.email}">email@example.com</span></p>
+    <p>Provider: <strong th:text="${user.provider}">LOCAL</strong></p>
 
-    <button class="logout" onclick="logout()">Logout</button>
+    <p>Your Roles:</p>
+    <ul>
+        <li th:each="auth : ${user.authorities}" th:text="${auth.authority}">ROLE_USER</li>
+    </ul>
+
+    <div sec:authorize="hasRole('ADMIN')">
+        <button class="admin" onclick="window.location.href='/admin/dashboard'">Go to Admin Dashboard</button>
+    </div>
+
+    <form th:action="@{/logout}" method="post">
+        <button class="logout" type="submit">Logout</button>
+    </form>
 </div>
 
-<script>
-    const loggedInUser = localStorage.getItem("loggedInUser");
-
-    if (!loggedInUser) {
-      window.location.href = "login.html";
-    }
-
-    const user = JSON.parse(localStorage.getItem(loggedInUser));
-    document.getElementById("userDisplay").textContent = user.username;
-    document.getElementById("userEmail").textContent = user.email;
-
-    function updateInfo() {
-      const newEmail = document.getElementById("newEmail").value.trim();
-      const newPassword = document.getElementById("newPassword").value.trim();
-      const msg = document.getElementById("msg");
-
-      msg.style.color = "red";
-      msg.textContent = "";
-
-      if (!newEmail && !newPassword) {
-        msg.textContent = "Enter at least one field to update.";
-        return;
-      }
-
-      if (newEmail) user.email = newEmail;
-      if (newPassword) {
-        if (newPassword.length < 6) {
-          msg.textContent = "Password must be at least 6 characters.";
-          return;
-        }
-        user.password = newPassword;
-      }
-
-      localStorage.setItem(loggedInUser, JSON.stringify(user));
-      msg.style.color = "green";
-      msg.textContent = "Information updated successfully.";
-
-      document.getElementById("userEmail").textContent = user.email;
-      document.getElementById("newEmail").value = "";
-      document.getElementById("newPassword").value = "";
-    }
-
-    function logout() {
-      localStorage.removeItem("loggedInUser");
-      window.location.href = "login.html";
-    }
-</script>
 </body>
 </html>

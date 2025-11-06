@@ -1,16 +1,18 @@
 package com.example.springssodemo.controller;
 
-import com.example.springssodemo.model.User;
+import com.example.springssodemo.dto.UserDto;
 import com.example.springssodemo.service.UserService;
+import com.example.springssodemo.exception.ConflictException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.ui.Model;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.util.List;
 
 /**
  * Handles local authentication and registration logic.
- * Works alongside SSO authentication (OAuth2 + SAML2).
  */
 @Controller
 @RequestMapping("/auth")
@@ -19,48 +21,32 @@ public class AuthController {
     @Autowired
     private UserService userService;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
     // ✅ Handle registration form submission
     @PostMapping("/register")
     public String registerUser(@RequestParam String username,
                                @RequestParam String email,
                                @RequestParam String password,
-                               Model model) {
+                               RedirectAttributes redirectAttributes) {
         try {
-            if (userService.existsByUsername(username)) {
-                model.addAttribute("error", "Username already exists!");
-                return "register";
-            }
+            UserDto userDto = new UserDto();
+            userDto.setUsername(username);
+            userDto.setEmail(email);
+            userDto.setPassword(password);
+            userDto.setProvider("LOCAL");
+            userDto.setRoles(List.of("ROLE_USER")); // Default to ROLE_USER
 
-            User user = new User();
-            user.setUsername(username);
-            user.setEmail(email);
-            user.setPassword(passwordEncoder.encode(password));
-            user.setProvider("LOCAL");
+            userService.create(userDto);
 
-            userService.saveUser(user);
-
-            model.addAttribute("success", "Registration successful! Please log in.");
+            // Add success message for the login page
+            redirectAttributes.addFlashAttribute("success", "Registration successful! Please log in.");
             return "redirect:/login?registered=true";
+
+        } catch (ConflictException e) {
+            redirectAttributes.addFlashAttribute("error", "Username already exists!");
+            return "redirect:/register";
         } catch (Exception e) {
-            model.addAttribute("error", "An error occurred during registration.");
-            return "register";
+            redirectAttributes.addFlashAttribute("error", "An error occurred during registration.");
+            return "redirect:/register";
         }
-    }
-
-    // ✅ Handles form login (delegated to Spring Security)
-    @PostMapping("/login")
-    public String login() {
-        // Spring Security handles authentication.
-        return "redirect:/home";
-    }
-
-    // ✅ Handles logout redirection
-    @GetMapping("/logout-success")
-    public String logoutSuccess(Model model) {
-        model.addAttribute("message", "You have been logged out successfully.");
-        return "login";
     }
 }

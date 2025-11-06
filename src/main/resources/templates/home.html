@@ -4,34 +4,12 @@
     <meta charset="UTF-8">
     <title>Home - SSO Portal</title>
     <style>
-        body {
-            font-family: "Segoe UI", Arial, sans-serif;
-            background: #f2f5f7;
-            height: 100vh;
-            margin: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .card {
-            background: white;
-            border-radius: 12px;
-            padding: 2rem;
-            width: 420px;
-            text-align: center;
-            box-shadow: 0 8px 18px rgba(0,0,0,0.1);
-        }
+        body { font-family: "Segoe UI", Arial, sans-serif; background: #f2f5f7; height: 100vh; margin: 0; display: flex; align-items: center; justify-content: center; }
+        .card { background: white; border-radius: 12px; padding: 2rem; width: 420px; text-align: center; box-shadow: 0 8px 18px rgba(0,0,0,0.1); }
         h2 { color: #0078d7; }
         p { color: #333; }
-        button {
-            padding: 10px 15px;
-            border: none;
-            border-radius: 6px;
-            color: white;
-            cursor: pointer;
-            margin-top: 15px;
-            font-weight: bold;
-        }
+        strong { text-transform: uppercase; }
+        button { padding: 10px 15px; border: none; border-radius: 6px; color: white; cursor: pointer; margin-top: 15px; font-weight: bold; }
         .logout { background: #d9534f; }
         .admin { background: #0078d7; }
         button:hover { opacity: 0.9; }
@@ -41,10 +19,16 @@
 
 <div class="card">
     <h2>Welcome, <span th:text="${user.username}">User</span>!</h2>
+
     <p>Email: <span th:text="${user.email}">email@example.com</span></p>
     <p>Provider: <strong th:text="${user.provider}">LOCAL</strong></p>
 
-    <div th:if="${#authentication.principal.authorities.?contains('ROLE_ADMIN')}">
+    <p>Your Roles:</p>
+    <ul>
+        <li th:each="auth : ${user.authorities}" th:text="${auth.authority}">ROLE_USER</li>
+    </ul>
+
+    <div sec:authorize="hasRole('ADMIN')">
         <button class="admin" onclick="window.location.href='/admin/dashboard'">Go to Admin Dashboard</button>
     </div>
 
@@ -52,10 +36,6 @@
         <button class="logout" type="submit">Logout</button>
     </form>
 </div>
-
-<script>
-    console.log("User home loaded successfully.");
-</script>
 
 </body>
 </html>

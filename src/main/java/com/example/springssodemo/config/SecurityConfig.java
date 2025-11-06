@@ -1,80 +1,64 @@
 package com.example.springssodemo.config;
 
+import com.example.springssodemo.service.CustomOidcUserService; // <-- IMPORT
+import org.springframework.beans.factory.annotation.Autowired; // <-- IMPORT
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 
-/**
- * ✅ Security Configuration
- * Handles access rules, custom login page, logout behavior,
- * and integration with OAuth2 + SAML2 SSO.
- */
 @Configuration
+@EnableMethodSecurity
 public class SecurityConfig {
+
+    @Autowired // <-- INJECT
+    private CustomOidcUserService customOidcUserService;
+
+    @Bean
+    public AuthenticationSuccessHandler roleBasedAuthenticationSuccessHandler() {
+        return new RoleBasedAuthenticationSuccessHandler();
+    }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                // Disable CSRF for development and APIs (enable in production if needed)
                 .csrf(csrf -> csrf.disable())
-
-                // 🔓 Configure endpoint access permissions
                 .authorizeHttpRequests(auth -> auth
-                        // Allow all static resources (HTML, JS, CSS, images)
-                        .requestMatchers(
-                                "/login.html", "/register.html", "/home.html",
-                                "/css/**", "/js/**", "/assets/**", "/images/**"
-                        ).permitAll()
-
-                        // Allow OAuth2 and SAML SSO paths
+                        .requestMatchers("/login", "/register", "/auth/**", "/css/**", "/js/**").permitAll()
                         .requestMatchers("/oauth2/**", "/saml2/**").permitAll()
-
-                        // Allow REST API endpoints for auth (if you use JSON login/register)
-                        .requestMatchers("/auth/**", "/api/public/**").permitAll()
-
-                        // Any other endpoint requires authentication
+                        .requestMatchers("/admin/**", "/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/home").hasAnyRole("USER", "ADMIN") // Allow admin to see home page
                         .anyRequest().authenticated()
                 )
-
-                // 🔐 Configure custom login
                 .formLogin(form -> form
-                        .loginPage("/login.html")                 // Your custom login page
-                        .loginProcessingUrl("/auth/login")        // POST endpoint for login
-                        .defaultSuccessUrl("/home.html", true)    // Redirect on successful login
-                        .failureUrl("/login.html?error=true")     // Redirect on failure
+                        .loginPage("/login")
+                        .loginProcessingUrl("/auth/login")
+                        .successHandler(roleBasedAuthenticationSuccessHandler())
+                        .failureUrl("/login?error=true")
                         .permitAll()
                 )
-
-                // 🔓 Allow logout from anywhere
+                // ✅ CONFIGURE OIDC LOGIN TO USE OUR JIT SERVICE
+                .oauth2Login(oauth2 -> oauth2
+                        .loginPage("/login")
+                        .successHandler(roleBasedAuthenticationSuccessHandler())
+                        .userInfoEndpoint(userInfo -> userInfo
+                                .oidcUserService(customOidcUserService) // <-- HERE
+                        )
+                )
+                .saml2Login(saml2 -> saml2
+                        .loginPage("/login")
+                        .successHandler(roleBasedAuthenticationSuccessHandler())
+                )
                 .logout(logout -> logout
                         .logoutUrl("/logout")
-                        .logoutSuccessUrl("/login.html?logout=true")
+                        .logoutSuccessUrl("/login?logout=true")
                         .invalidateHttpSession(true)
                         .deleteCookies("JSESSIONID")
                         .permitAll()
-                )
-
-                // 🧩 Enable OAuth2 (Google, GitHub, etc.)
-                .oauth2Login(oauth2 -> oauth2
-                        .loginPage("/login.html")
-                        .defaultSuccessUrl("/home.html", true)
-                )
-
-                // 🧩 Enable SAML2 (miniOrange or other IDP)
-                .saml2Login(saml2 -> saml2
-                        .loginPage("/login.html")
-                        .defaultSuccessUrl("/home.html", true)
                 );
-                .http.authorizeHttpRequests(auth -> auth
-                .requestMatchers("/admin/**").hasRole("ADMIN")
-                .requestMatchers("/home/**").hasAnyRole("USER", "ADMIN")
-                .requestMatchers("/login", "/register", "/auth/**", "/css/**", "/js/**").permitAll()
-                .anyRequest().authenticated()
-                 );
 
-
-        // ✅ Build the security chain
         return http.build();
     }
 }

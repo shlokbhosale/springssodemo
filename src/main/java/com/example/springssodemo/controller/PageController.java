@@ -1,27 +1,21 @@
 package com.example.springssodemo.controller;
 
 import com.example.springssodemo.model.User;
-import com.example.springssodemo.repository.UserRepository;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.oauth2.core.user.OAuth2User;
-import org.springframework.security.saml2.provider.service.authentication.Saml2AuthenticatedPrincipal;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
 /**
- * Handles navigation and page rendering for Thymeleaf templates.
+ * ✅ Unified Page Controller.
+ * Handles navigation and page rendering for all Thymeleaf templates.
+ * Replaces the need for HomeController.
  */
 @Controller
 public class PageController {
 
-    private final UserRepository userRepository;
-
-    public PageController(UserRepository userRepository) {
-        this.userRepository = userRepository;
-    }
-
-    // ✅ Redirect default route
+    // ✅ Redirect default route to login
     @GetMapping("/")
     public String index() {
         return "redirect:/login";
@@ -39,29 +33,26 @@ public class PageController {
         return "register";
     }
 
-    // ✅ Home page (loads logged-in user data)
+    /**
+     * ✅ User Home Page
+     * Secured by SecurityConfig to only allow ROLE_USER.
+     * We can inject the @AuthenticationPrincipal (our User object) directly.
+     */
     @GetMapping("/home")
-    public String homePage(Authentication authentication, Model model) {
-        if (authentication == null) {
-            return "redirect:/login";
-        }
-
-        Object principal = authentication.getPrincipal();
-        User user = new User();
-
-        if (principal instanceof User) {
-            user = (User) principal;
-        } else if (principal instanceof OAuth2User oauthUser) {
-            user.setUsername(oauthUser.getAttribute("name"));
-            user.setEmail(oauthUser.getAttribute("email"));
-            user.setProvider("OAUTH2");
-        } else if (principal instanceof Saml2AuthenticatedPrincipal samlUser) {
-            user.setUsername(samlUser.getName());
-            user.setEmail(samlUser.getFirstAttribute("email"));
-            user.setProvider("SAML2");
-        }
-
+    public String homePage(@AuthenticationPrincipal User user, Model model) {
         model.addAttribute("user", user);
         return "home";
+    }
+
+    /**
+     * ✅ Admin Dashboard Page
+     * Secured by SecurityConfig to only allow ROLE_ADMIN.
+     * We inject the principal just to show "Welcome, Admin!"
+     */
+    @GetMapping("/admin/dashboard")
+    public String adminDashboard() {
+        // The admin-dashboard.html is mostly client-side JavaScript
+        // No model attributes are needed for it to function
+        return "admin-dashboard";
     }
 }
