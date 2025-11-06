@@ -1,7 +1,9 @@
 package com.example.springssodemo.config;
 
-import com.example.springssodemo.service.CustomOidcUserService; // <-- IMPORT
-import org.springframework.beans.factory.annotation.Autowired; // <-- IMPORT
+import com.example.springssodemo.security.DbClientRegistrationRepository; // <-- IMPORT
+import com.example.springssodemo.security.DbRelyingPartyRegistrationRepository; // <-- IMPORT
+import com.example.springssodemo.service.CustomOidcUserService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -13,8 +15,15 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    @Autowired // <-- INJECT
+    @Autowired
     private CustomOidcUserService customOidcUserService;
+
+    // ✅ INJECT YOUR DYNAMIC REPOSITORIES
+    @Autowired
+    private DbClientRegistrationRepository dbClientRegistrationRepository;
+
+    @Autowired
+    private DbRelyingPartyRegistrationRepository dbRelyingPartyRegistrationRepository;
 
     @Bean
     public AuthenticationSuccessHandler roleBasedAuthenticationSuccessHandler() {
@@ -29,7 +38,7 @@ public class SecurityConfig {
                         .requestMatchers("/login", "/register", "/auth/**", "/css/**", "/js/**").permitAll()
                         .requestMatchers("/oauth2/**", "/saml2/**").permitAll()
                         .requestMatchers("/admin/**", "/api/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/home").hasAnyRole("USER", "ADMIN") // Allow admin to see home page
+                        .requestMatchers("/home").hasAnyRole("USER", "ADMIN")
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
@@ -39,17 +48,20 @@ public class SecurityConfig {
                         .failureUrl("/login?error=true")
                         .permitAll()
                 )
-                // ✅ CONFIGURE OIDC LOGIN TO USE OUR JIT SERVICE
                 .oauth2Login(oauth2 -> oauth2
                         .loginPage("/login")
                         .successHandler(roleBasedAuthenticationSuccessHandler())
+                        // ✅ TELL OAUTH2 TO USE YOUR DB-BACKED REPOSITORY
+                        .clientRegistrationRepository(dbClientRegistrationRepository)
                         .userInfoEndpoint(userInfo -> userInfo
-                                .oidcUserService(customOidcUserService) // <-- HERE
+                                .oidcUserService(customOidcUserService)
                         )
                 )
                 .saml2Login(saml2 -> saml2
                         .loginPage("/login")
                         .successHandler(roleBasedAuthenticationSuccessHandler())
+                        // ✅ TELL SAML2 TO USE YOUR DB-BACKED REPOSITORY (This fixes the error)
+                        .relyingPartyRegistrationRepository(dbRelyingPartyRegistrationRepository)
                 )
                 .logout(logout -> logout
                         .logoutUrl("/logout")
