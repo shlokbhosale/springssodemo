@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard - SSO & User Management</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: #f3f5f7;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background: #2c3e50;
+            color: #fff;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        header h1 { margin: 0; font-size: 20px; }
+        nav {
+            display: flex;
+            background: #34495e;
+        }
+        nav button {
+            flex: 1;
+            border: none;
+            background: #34495e;
+            color: #ecf0f1;
+            padding: 14px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        nav button.active {
+            background: #1abc9c;
+            color: #fff;
+        }
+        .tab-content {
+            display: none;
+            padding: 25px;
+        }
+        .tab-content.active { display: block; }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            background: #fff;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background: #2c3e50;
+            color: #fff;
+        }
+        button.action {
+            background: #1abc9c;
+            border: none;
+            padding: 6px 10px;
+            color: white;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        button.danger {
+            background: #e74c3c;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        input, select, textarea {
+            padding: 8px;
+            width: 100%;
+            box-sizing: border-box;
+            margin-top: 5px;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.4);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: white;
+            padding: 20px;
+            width: 400px;
+            border-radius: 6px;
+        }
+        .close {
+            float: right;
+            cursor: pointer;
+            color: #e74c3c;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Admin Dashboard</h1>
+    <div>Welcome, <span id="adminName">Admin</span></div>
+</header>
+
+<nav>
+    <button class="tab-button active" data-tab="welcome">Welcome</button>
+    <button class="tab-button" data-tab="users">User Management</button>
+    <button class="tab-button" data-tab="sso-saml">SAML Config</button>
+    <button class="tab-button" data-tab="sso-oidc">OIDC Config</button>
+    <button class="tab-button" data-tab="sso-jwt">JWT Config</button>
+</nav>
+
+<!-- ===================== Welcome Tab ===================== -->
+<section id="welcome" class="tab-content active">
+    <h2>Welcome</h2>
+    <p>This is your administrative control panel for managing users and Single Sign-On (SSO) configurations.</p>
+    <p>Use the navigation tabs above to switch between sections.</p>
+</section>
+
+<!-- ===================== User Management Tab ===================== -->
+<section id="users" class="tab-content">
+    <h2>User Management</h2>
+    <button class="action" onclick="openUserModal()">+ Add User</button>
+    <br><br>
+    <table id="usersTable">
+        <thead>
+        <tr>
+            <th>ID</th><th>Username</th><th>Email</th><th>First Name</th><th>Last Name</th><th>Roles</th><th>Provider</th><th>Actions</th>
+        </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</section>
+
+<!-- ===================== SSO Config Tabs ===================== -->
+<section id="sso-saml" class="tab-content">
+    <h2>SAML Configuration</h2>
+    <div id="samlConfigs"></div>
+</section>
+
+<section id="sso-oidc" class="tab-content">
+    <h2>OIDC Configuration</h2>
+    <div id="oidcConfigs"></div>
+</section>
+
+<section id="sso-jwt" class="tab-content">
+    <h2>JWT Configuration</h2>
+    <div id="jwtConfigs"></div>
+</section>
+
+<!-- ===================== Add/Edit User Modal ===================== -->
+<div class="modal" id="userModal">
+    <div class="modal-content">
+        <span class="close" onclick="closeUserModal()">&times;</span>
+        <h3 id="userModalTitle">Add User</h3>
+        <div class="form-group">
+            <label>Username</label>
+            <input type="text" id="usernameInput">
+        </div>
+        <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="emailInput">
+        </div>
+        <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="passwordInput">
+        </div>
+        <button class="action" onclick="saveUser()">Save</button>
+    </div>
+</div>
+
+<script>
+    const apiBase = '/api/admin';
+
+    // ======= TAB NAVIGATION =======
+    document.querySelectorAll('.tab-button').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById(btn.dataset.tab).classList.add('active');
+            if (btn.dataset.tab === 'users') loadUsers();
+            if (btn.dataset.tab.startsWith('sso')) loadSsoConfigs();
+        });
+    });
+
+    // ======= USER MANAGEMENT =======
+    async function loadUsers() {
+        const res = await fetch(`${apiBase}/users`);
+        const data = await res.json();
+        const tbody = document.querySelector('#usersTable tbody');
+        tbody.innerHTML = '';
+        data.content.forEach(u => {
+            const row = `<tr>
+                <td>${u.id}</td><td>${u.username}</td><td>${u.email}</td>
+                <td>${u.firstName||''}</td><td>${u.lastName||''}</td>
+                <td>${(u.roles||[]).join(', ')}</td><td>${u.provider}</td>
+                <td>
+                    <button class="action" onclick="editUser(${u.id}, '${u.username}', '${u.email}')">Edit</button>
+                    <button class="action danger" onclick="deleteUser(${u.id})">Delete</button>
+                </td></tr>`;
+            tbody.innerHTML += row;
+        });
+    }
+
+    function openUserModal() {
+        document.getElementById('userModal').style.display = 'flex';
+    }
+
+    function closeUserModal() {
+        document.getElementById('userModal').style.display = 'none';
+    }
+
+    async function saveUser() {
+        const username = document.getElementById('usernameInput').value;
+        const email = document.getElementById('emailInput').value;
+        const password = document.getElementById('passwordInput').value;
+        await fetch(`${apiBase}/users`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({username, email, password, provider:'local'})
+        });
+        closeUserModal();
+        loadUsers();
+    }
+
+    async function deleteUser(id) {
+        if (confirm('Are you sure you want to delete this user?')) {
+            await fetch(`${apiBase}/users/${id}`, {method: 'DELETE'});
+            loadUsers();
+        }
+    }
+
+    // ======= SSO CONFIG MANAGEMENT =======
+    async function loadSsoConfigs() {
+        const res = await fetch(`${apiBase}/sso-config`);
+        const configs = await res.json();
+        const byType = { SAML: [], OIDC: [], JWT: [] };
+        configs.forEach(c => byType[c.type]?.push(c));
+
+        renderSsoList('samlConfigs', byType.SAML);
+        renderSsoList('oidcConfigs', byType.OIDC);
+        renderSsoList('jwtConfigs', byType.JWT);
+    }
+
+    function renderSsoList(containerId, list) {
+        const div = document.getElementById(containerId);
+        if (!list.length) {
+            div.innerHTML = `<p>No configurations found.</p>`;
+            return;
+        }
+        let html = `<table><thead><tr><th>ID</th><th>Provider ID</th><th>Type</th><th>Display Name</th><th>Enabled</th><th>Actions</th></tr></thead><tbody>`;
+        list.forEach(cfg => {
+            html += `<tr>
+                <td>${cfg.id}</td>
+                <td>${cfg.providerId}</td>
+                <td>${cfg.type}</td>
+                <td>${cfg.displayName || '-'}</td>
+                <td>${cfg.enabled}</td>
+                <td>
+                    <button class="action" onclick="toggleSso(${cfg.id}, ${!cfg.enabled})">${cfg.enabled ? 'Disable' : 'Enable'}</button>
+                    <button class="action danger" onclick="deleteSso(${cfg.id})">Delete</button>
+                </td></tr>`;
+        });
+        html += `</tbody></table>`;
+        div.innerHTML = html;
+    }
+
+    async function toggleSso(id, newStatus) {
+        await fetch(`${apiBase}/sso-config/${id}`, {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({enabled: newStatus})
+        });
+        loadSsoConfigs();
+    }
+
+    async function deleteSso(id) {
+        if (confirm('Delete this SSO configuration?')) {
+            await fetch(`${apiBase}/sso-config/${id}`, {method:'DELETE'});
+            loadSsoConfigs();
+        }
+    }
+</script>
+
+</body>
+</html>

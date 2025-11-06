@@ -1,13 +1,135 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<head><meta charset="utf-8"/><title>Home</title></head>
-<body style="font-family: Arial, Helvetica, sans-serif; padding:20px;">
-  <div style="max-width:800px; margin:0 auto;">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-      <h2>Hello <span th:text="${username}">User</span></h2>
-      <a href="/logout" style="padding:8px 12px; border-radius:4px; text-decoration:none; border:1px solid #333;">Logout</a>
-    </div>
-    <p>Welcome to the home page.</p>
-  </div>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Home</title>
+    <style>
+        body {
+          font-family: Arial, sans-serif;
+          background: #f4f6f8;
+          margin: 0;
+          padding: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          height: 100vh;
+        }
+
+        .container {
+          background: white;
+          width: 400px;
+          padding: 30px;
+          border-radius: 10px;
+          box-shadow: 0 0 10px rgba(0,0,0,0.1);
+          text-align: center;
+        }
+
+        h2 {
+          margin-bottom: 10px;
+        }
+
+        p {
+          margin-bottom: 15px;
+        }
+
+        input {
+          width: 100%;
+          padding: 10px;
+          margin: 8px 0;
+          border: 1px solid #ccc;
+          border-radius: 5px;
+        }
+
+        button {
+          width: 100%;
+          padding: 10px;
+          background: #0078d7;
+          color: white;
+          border: none;
+          border-radius: 5px;
+          cursor: pointer;
+          margin-top: 10px;
+        }
+
+        button:hover {
+          background: #005fa3;
+        }
+
+        .logout {
+          background: #d9534f;
+        }
+
+        .logout:hover {
+          background: #b52b27;
+        }
+
+        .message {
+          margin-top: 10px;
+          font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>Welcome, <span id="userDisplay"></span>!</h2>
+    <p>Email: <span id="userEmail"></span></p>
+
+    <h3>Update Info</h3>
+    <input type="text" id="newEmail" placeholder="New Email" />
+    <input type="password" id="newPassword" placeholder="New Password" />
+    <button onclick="updateInfo()">Update</button>
+
+    <div class="message" id="msg"></div>
+
+    <button class="logout" onclick="logout()">Logout</button>
+</div>
+
+<script>
+    const loggedInUser = localStorage.getItem("loggedInUser");
+
+    if (!loggedInUser) {
+      window.location.href = "login.html";
+    }
+
+    const user = JSON.parse(localStorage.getItem(loggedInUser));
+    document.getElementById("userDisplay").textContent = user.username;
+    document.getElementById("userEmail").textContent = user.email;
+
+    function updateInfo() {
+      const newEmail = document.getElementById("newEmail").value.trim();
+      const newPassword = document.getElementById("newPassword").value.trim();
+      const msg = document.getElementById("msg");
+
+      msg.style.color = "red";
+      msg.textContent = "";
+
+      if (!newEmail && !newPassword) {
+        msg.textContent = "Enter at least one field to update.";
+        return;
+      }
+
+      if (newEmail) user.email = newEmail;
+      if (newPassword) {
+        if (newPassword.length < 6) {
+          msg.textContent = "Password must be at least 6 characters.";
+          return;
+        }
+        user.password = newPassword;
+      }
+
+      localStorage.setItem(loggedInUser, JSON.stringify(user));
+      msg.style.color = "green";
+      msg.textContent = "Information updated successfully.";
+
+      document.getElementById("userEmail").textContent = user.email;
+      document.getElementById("newEmail").value = "";
+      document.getElementById("newPassword").value = "";
+    }
+
+    function logout() {
+      localStorage.removeItem("loggedInUser");
+      window.location.href = "login.html";
+    }
+</script>
 </body>
 </html>

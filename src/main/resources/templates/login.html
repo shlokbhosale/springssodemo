@@ -1,35 +1,117 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Login</title>
+    <meta charset="UTF-8">
+    <title>Login - SSO Portal</title>
+    <style>
+        body {
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: linear-gradient(120deg, #0078d7, #00b4d8);
+            height: 100vh;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            width: 360px;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.2);
+            padding: 30px;
+            text-align: center;
+        }
+        h2 {
+            color: #0078d7;
+            margin-bottom: 15px;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            border: none;
+            border-radius: 5px;
+            color: #fff;
+            font-weight: bold;
+            cursor: pointer;
+            background-color: #0078d7;
+        }
+        button:hover { background-color: #005fa3; }
+        .sso-btn {
+            margin-top: 8px;
+            background: #4285F4;
+        }
+        .sso-btn.saml { background: #0F5CBA; }
+        a { color: #0078d7; text-decoration: none; font-size: 14px; }
+        .error { color: red; margin-top: 5px; }
+        .success { color: green; margin-top: 5px; }
+    </style>
 </head>
-<body style="font-family: Arial, Helvetica, sans-serif; display:flex; justify-content:center; align-items:center; height:100vh;">
-<div style="width:420px; padding:20px; border-radius:8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-  <h2 style="margin-top:0;">Login</h2>
+<body>
 
-  <div th:if="${error}" style="color:#b00020; margin-bottom:10px;" th:text="${error}"></div>
-  <div th:if="${message}" style="color:green; margin-bottom:10px;" th:text="${message}"></div>
+<div class="container">
+    <h2>Sign In</h2>
 
-  <form th:action="@{/doLogin}" method="post" style="margin-bottom:14px;">
-    <div><input name="username" placeholder="Username" required style="width:100%; padding:8px; margin-bottom:8px;"/></div>
-    <div><input name="password" type="password" placeholder="Password" required style="width:100%; padding:8px; margin-bottom:8px;"/></div>
-    <div><button type="submit" style="width:100%; padding:10px; border-radius:4px;">Login</button></div>
-  </form>
+    <form th:action="@{/auth/login}" method="post">
+        <input type="text" name="username" placeholder="Username" required/>
+        <input type="password" name="password" placeholder="Password" required/>
+        <button type="submit">Login</button>
+    </form>
 
-  <div style="text-align:center; margin:10px 0;">OR</div>
+    <p th:if="${param.error}" class="error">Invalid credentials, please try again.</p>
+    <p th:if="${param.logout}" class="success">You have been logged out successfully.</p>
+    <p th:if="${param.registered}" class="success">Registration successful! Please log in.</p>
 
-  <!-- SSO buttons -->
-  <div>
-    <a href="/sso/login" style="display:block; text-decoration:none; margin-bottom:8px; padding:10px; border-radius:4px; text-align:center; border:1px solid #333;">Login with SSO (JWT)</a>
-    <a href="/sso/saml" style="display:block; text-decoration:none; margin-bottom:8px; padding:10px; border-radius:4px; text-align:center; border:1px solid #333;">Login with SSO (SAML) - placeholder</a>
-    <a href="/oauth2/authorization/miniorange" style="display:block; text-decoration:none; margin-bottom:8px; padding:10px; border-radius:4px; text-align:center; border:1px solid #333;">Login with SSO (OIDC) - placeholder</a>
-  </div>
+    <div>
+        <button class="sso-btn" onclick="window.location.href='/oauth2/authorization/google'">
+            Login with Google (OAuth2)
+        </button>
+        <button class="sso-btn saml" onclick="window.location.href='/saml2/authenticate/miniorange'">
+            Login with miniOrange (SAML2)
+        </button>
+    </div>
 
-  <div style="margin-top:12px; text-align:center;">
-    <a href="/register" style="font-size:14px;">Register here</a>
-  </div>
+    <p style="margin-top:10px;">Don't have an account? <a th:href="@{/register}">Register</a></p>
 </div>
+
+<script>
+    function login() {
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value.trim();
+      const msg = document.getElementById("msg");
+
+      if (!username || !password) {
+        msg.textContent = "Please fill in all fields.";
+        return;
+      }
+
+      const userData = JSON.parse(localStorage.getItem(username));
+
+      if (!userData) {
+        msg.textContent = "User not found.";
+        return;
+      }
+
+      if (userData.password !== password) {
+        msg.textContent = "Incorrect password.";
+        return;
+      }
+
+      localStorage.setItem("loggedInUser", username);
+      window.location.href = "home.html";
+    }
+
+    // Redirect if already logged in
+    if (localStorage.getItem("loggedInUser")) {
+      window.location.href = "home.html";
+    }
+</script>
 </body>
 </html>

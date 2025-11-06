@@ -1,60 +1,66 @@
 package com.example.springssodemo.controller;
 
 import com.example.springssodemo.model.User;
-import com.example.springssodemo.repo.UserRepository;
+import com.example.springssodemo.service.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 
-import jakarta.servlet.http.HttpSession;
-
+/**
+ * Handles local authentication and registration logic.
+ * Works alongside SSO authentication (OAuth2 + SAML2).
+ */
 @Controller
+@RequestMapping("/auth")
 public class AuthController {
-    private final UserRepository userRepository;
 
-    public AuthController(UserRepository userRepository) {
-        this.userRepository = userRepository;
-    }
+    @Autowired
+    private UserService userService;
 
-    @GetMapping({"/", "/login"})
-    public String loginPage() {
-        return "login";
-    }
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
-    @GetMapping("/register")
-    public String registerPage() {
-        return "register";
-    }
-
+    // ✅ Handle registration form submission
     @PostMapping("/register")
-    public String doRegister(@RequestParam String username,
-                             @RequestParam String password,
-                             @RequestParam String email,
-                             Model model) {
-        if (userRepository.findByUsername(username).isPresent()) {
-            model.addAttribute("error", "Username already exists");
+    public String registerUser(@RequestParam String username,
+                               @RequestParam String email,
+                               @RequestParam String password,
+                               Model model) {
+        try {
+            if (userService.existsByUsername(username)) {
+                model.addAttribute("error", "Username already exists!");
+                return "register";
+            }
+
+            User user = new User();
+            user.setUsername(username);
+            user.setEmail(email);
+            user.setPassword(passwordEncoder.encode(password));
+            user.setProvider("LOCAL");
+
+            userService.saveUser(user);
+
+            model.addAttribute("success", "Registration successful! Please log in.");
+            return "redirect:/login?registered=true";
+        } catch (Exception e) {
+            model.addAttribute("error", "An error occurred during registration.");
             return "register";
         }
-        User u = new User(username, password, email);
-        userRepository.save(u);
-        model.addAttribute("message", "Registered successfully. Please login.");
-        return "login";
     }
 
-    @PostMapping("/doLogin")
-    public String doLogin(@RequestParam String username,
-                          @RequestParam String password,
-                          HttpSession session,
-                          Model model) {
-        var opt = userRepository.findByUsername(username);
-        if (opt.isPresent() && opt.get().getPassword().equals(password)) {
-            session.setAttribute("username", username);
-            return "redirect:/home";
-        } else {
-            model.addAttribute("error", "Invalid credentials");
-            return "login";
-        }
+    // ✅ Handles form login (delegated to Spring Security)
+    @PostMapping("/login")
+    public String login() {
+        // Spring Security handles authentication.
+        return "redirect:/home";
+    }
+
+    // ✅ Handles logout redirection
+    @GetMapping("/logout-success")
+    public String logoutSuccess(Model model) {
+        model.addAttribute("message", "You have been logged out successfully.");
+        return "login";
     }
 }
