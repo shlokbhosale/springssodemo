@@ -1,365 +1,174 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8">
-    <title>Admin Dashboard - SSO & User Management</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Admin Dashboard</title>
     <style>
-        body { font-family: "Segoe UI", Arial, sans-serif; background: #f3f5f7; margin: 0; padding: 0; }
-        header { background: #2c3e50; color: #fff; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; }
-        header h1 { margin: 0; font-size: 20px; }
-        nav { display: flex; background: #34495e; }
-        nav button { flex: 1; border: none; background: #34495e; color: #ecf0f1; padding: 14px; cursor: pointer; font-size: 16px; }
-        nav button.active { background: #1abc9c; color: #fff; }
-        .tab-content { display: none; padding: 25px; }
-        .tab-content.active { display: block; }
-        table { border-collapse: collapse; width: 100%; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
-        th { background: #2c3e50; color: #fff; }
-        button.action { background: #1abc9c; border: none; padding: 6px 10px; color: white; cursor: pointer; border-radius: 4px; margin: 2px; }
-        button.danger { background: #e74c3c; }
-        .form-group { margin-bottom: 15px; }
-        label, input, select, textarea { padding: 8px; width: 100%; box-sizing: border-box; margin-top: 5px; border-radius: 4px; border: 1px solid #ccc; }
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); justify-content: center; align-items: center; z-index: 100; }
-        .modal-content { background: white; padding: 20px; width: 500px; border-radius: 6px; }
-        .close { float: right; cursor: pointer; color: #e74c3c; font-weight: bold; font-size: 20px; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0f0f0f 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #d4af37;
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        h2 {
+            text-align: center;
+            font-size: 2.5em;
+            margin-bottom: 30px;
+            background: linear-gradient(45deg, #ffd700, #ffed4e, #d4af37);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 30px rgba(212, 175, 55, 0.3);
+            letter-spacing: 2px;
+        }
+
+        a {
+            color: #ffd700;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        a:hover {
+            color: #ffed4e;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+
+        body > a {
+            display: inline-block;
+            background: linear-gradient(135deg, #d4af37 0%, #ffd700 100%);
+            color: #000;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-weight: bold;
+            margin: 0 auto 30px;
+            display: block;
+            width: fit-content;
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+            border: 2px solid #ffd700;
+        }
+
+        body > a:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.5);
+            color: #000;
+        }
+
+        table {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            border-collapse: separate;
+            border-spacing: 0;
+            background: rgba(26, 26, 26, 0.8);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(212, 175, 55, 0.2);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+        }
+
+        th {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            color: #ffd700;
+            padding: 18px;
+            text-align: left;
+            font-size: 1.1em;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            border-bottom: 2px solid #d4af37;
+        }
+
+        td {
+            padding: 15px 18px;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+            color: #e0e0e0;
+        }
+
+        tr {
+            transition: all 0.3s ease;
+        }
+
+        tr:hover {
+            background: rgba(212, 175, 55, 0.1);
+            transform: scale(1.01);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        td:first-child {
+            color: #d4af37;
+            font-weight: bold;
+        }
+
+        td a {
+            padding: 6px 15px;
+            border-radius: 5px;
+            font-size: 0.9em;
+            display: inline-block;
+            margin: 0 3px;
+        }
+
+        td a:first-child {
+            background: rgba(212, 175, 55, 0.2);
+            border: 1px solid #d4af37;
+        }
+
+        td a:first-child:hover {
+            background: rgba(212, 175, 55, 0.3);
+        }
+
+        td a:last-child {
+            background: rgba(255, 69, 58, 0.2);
+            border: 1px solid #ff453a;
+            color: #ff6b6b;
+        }
+
+        td a:last-child:hover {
+            background: rgba(255, 69, 58, 0.3);
+            color: #ff8787;
+        }
+
+        @media (max-width: 768px) {
+            table {
+                font-size: 0.9em;
+            }
+
+            h2 {
+                font-size: 2em;
+            }
+        }
     </style>
 </head>
 <body>
 
-<header>
-    <h1>Admin Dashboard</h1>
-    <div>Welcome, <span sec:authentication="name">Admin</span>!</div>
-</header>
+<h2>Admin Dashboard</h2>
+<a th:href="@{/admin/add}">Add New User</a>
+<table border="1">
+    <tr>
+        <th>ID</th>
+        <th>Username</th>
+        <th>Role</th>
+        <th>Action</th>
+    </tr>
+    <tr th:each="user : ${users}">
+        <td th:text="${user.id}"></td>
+        <td th:text="${user.username}"></td>
+        <td th:text="${user.role}"></td>
+        <td>
+            <a th:href="@{'/admin/edit/' + ${user.id}}">Edit</a> |
+            <a th:href="@{'/admin/delete/' + ${user.id}}">Delete</a>
+        </td>
+    </tr>
+</table>
 
-<nav>
-    <button class="tab-button active" data-tab="users">User Management</button>
-    <button class="tab-button" data-tab="sso">SSO Configuration</button>
-    <button class="tab-button" data-tab="logout" onclick="document.getElementById('logoutForm').submit();">Logout</button>
-</nav>
-
-<form id="logoutForm" th:action="@{/logout}" method="post" style="display:none;"></form>
-
-<section id="users" class="tab-content active">
-    <h2>User Management</h2>
-    <button class="action" onclick="openUserModal(null)">+ Add User</button>
-    <br><br>
-    <table id="usersTable">
-        <thead>
-        <tr>
-            <th>ID</th><th>Username</th><th>Email</th><th>Roles</th><th>Provider</th><th>Actions</th>
-        </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
-</section>
-
-<section id="sso" class="tab-content">
-    <h2>SSO Configuration</h2>
-    <button class="action" onclick="openSsoModal(null)">+ Add SSO Config</button>
-    <br><br>
-    <table id="ssoTable">
-        <thead>
-        <tr>
-            <th>Provider ID</th><th>Type</th><th>Display Name</th><th>Enabled</th><th>Has Secret</th><th>Actions</th>
-        </tr>
-        </thead>
-        <tbody id="ssoTbody"></tbody>
-    </table>
-</section>
-
-
-<div class="modal" id="userModal">
-    <div class="modal-content">
-        <span class="close" onclick="closeModal('userModal')">&times;</span>
-        <h3 id="userModalTitle">Add User</h3>
-        <input type="hidden" id="userIdInput">
-        <div class="form-group">
-            <label>Username</label>
-            <input type="text" id="usernameInput">
-        </div>
-        <div class="form-group">
-            <label>Email</label>
-            <input type="email" id="emailInput">
-        </div>
-        <div class="form-group">
-            <label>Password (leave blank to keep unchanged)</label>
-            <input type="password" id="passwordInput">
-        </div>
-        <div class="form-group">
-            <label>Roles (comma-separated, e.g., ROLE_USER,ROLE_ADMIN)</label>
-            <input type="text" id="rolesInput">
-        </div>
-        <button class="action" onclick="saveUser()">Save</button>
-    </div>
-</div>
-
-<div class="modal" id="ssoModal">
-    <div class="modal-content">
-        <span class="close" onclick="closeModal('ssoModal')">&times;</span>
-        <h3 id="ssoModalTitle">Add SSO Config</h3>
-        <input type="hidden" id="ssoIdInput">
-        <div class="form-group">
-            <label>Provider ID (e.g., 'google', 'miniorange-saml')</label>
-            <input type="text" id="ssoProviderIdInput">
-        </div>
-        <div class="form-group">
-            <label>Type</label>
-            <select id="ssoTypeInput">
-                <option value="OIDC">OIDC</option>
-                <option value="SAML">SAML</option>
-                <option value="JWT">JWT</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label>Display Name (e.g., 'Login with Google')</label>
-            <input type="text" id="ssoDisplayNameInput">
-        </div>
-        <div class="form-group">
-            <label>Enabled</label>
-            <select id="ssoEnabledInput">
-                <option value="true">True</option>
-                <option value="false">False</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label>Settings (JSON)</label>
-            <textarea id="ssoSettingsInput" rows="10" placeholder='{ "clientId": "...", "clientSecret": "...", "issuer": "..." }'></textarea>
-        </div>
-        <button class="action" onclick="saveSsoConfig()">Save</button>
-    </div>
-</div>
-
-<script>
-    const apiBase = '/api/admin';
-    let currentEditUser = null;
-    let currentEditSso = null;
-
-    // ======= TAB NAVIGATION =======
-    document.querySelectorAll('.tab-button').forEach(btn => {
-        btn.addEventListener('click', () => {
-            if (btn.dataset.tab === 'logout') return;
-            document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            btn.classList.add('active');
-            document.getElementById(btn.dataset.tab).classList.add('active');
-        });
-    });
-
-    // ======= MODAL CONTROLS =======
-    function openModal(id) { document.getElementById(id).style.display = 'flex'; }
-    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-
-    // ======= USER MANAGEMENT =======
-    async function loadUsers() {
-        try {
-            const res = await fetch(`${apiBase}/users`);
-            if (!res.ok) throw new Error(`Failed to fetch users: ${res.statusText}`);
-            const data = await res.json();
-            const tbody = document.querySelector('#usersTable tbody');
-            tbody.innerHTML = '';
-            data.content.forEach(u => {
-                const row = `<tr>
-                    <td>${u.id}</td><td>${u.username}</td><td>${u.email}</td>
-                    <td>${(u.roles || []).join(', ')}</td><td>${u.provider}</td>
-                    <td>
-                        <button class="action" onclick='openUserModal(${JSON.stringify(u)})'>Edit</button>
-                        <button class="action danger" onclick="deleteUser(${u.id})">Delete</button>
-                    </td></tr>`;
-                tbody.innerHTML += row;
-            });
-        } catch (e) { console.error(e); alert('Error loading users.'); }
-    }
-
-    function openUserModal(user) {
-        currentEditUser = user;
-        if (user) {
-            document.getElementById('userModalTitle').textContent = 'Edit User';
-            document.getElementById('userIdInput').value = user.id;
-            document.getElementById('usernameInput').value = user.username;
-            document.getElementById('emailInput').value = user.email;
-            document.getElementById('rolesInput').value = (user.roles || []).join(', ');
-            document.getElementById('passwordInput').placeholder = 'Leave blank to keep unchanged';
-        } else {
-            document.getElementById('userModalTitle').textContent = 'Add User';
-            document.getElementById('userIdInput').value = '';
-            document.getElementById('usernameInput').value = '';
-            document.getElementById('emailInput').value = '';
-            document.getElementById('rolesInput').value = 'ROLE_USER';
-            document.getElementById('passwordInput').placeholder = 'Password';
-        }
-        document.getElementById('passwordInput').value = ''; // Clear password field
-        openModal('userModal');
-    }
-
-    async function saveUser() {
-        const id = document.getElementById('userIdInput').value;
-        const isUpdate = !!id;
-        const method = isUpdate ? 'PUT' : 'POST';
-        const url = isUpdate ? `${apiBase}/users/${id}` : `${apiBase}/users`;
-
-        const roles = document.getElementById('rolesInput').value.split(',')
-            .map(r => r.trim()).filter(r => r.length > 0);
-
-        const body = {
-            username: document.getElementById('usernameInput').value,
-            email: document.getElementById('emailInput').value,
-            roles: roles,
-            provider: 'LOCAL'
-        };
-
-        const password = document.getElementById('passwordInput').value;
-        if (password) {
-            body.password = password;
-        }
-
-        try {
-            const res = await fetch(url, {
-                method: method,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body)
-            });
-            if (!res.ok) throw new Error(await res.text());
-            closeModal('userModal');
-            loadUsers();
-        } catch (e) { console.error(e); alert('Error saving user: ' + e.message); }
-    }
-
-    async function deleteUser(id) {
-        if (confirm('Are you sure you want to delete this user?')) {
-            try {
-                await fetch(`${apiBase}/users/${id}`, { method: 'DELETE' });
-                loadUsers();
-            } catch (e) { console.error(e); alert('Error deleting user.'); }
-        }
-    }
-
-    // ======= SSO CONFIG MANAGEMENT =======
-    async function loadSsoConfigs() {
-        try {
-            const res = await fetch(`${apiBase}/sso-config`);
-            if (!res.ok) throw new Error('Failed to fetch SSO configs');
-            const configs = await res.json();
-            const tbody = document.getElementById('ssoTbody');
-            tbody.innerHTML = '';
-            configs.forEach(cfg => {
-                const row = `<tr>
-                    <td>${cfg.providerId}</td>
-                    <td>${cfg.type}</td>
-                    <td>${cfg.displayName || '-'}</td>
-                    <td>${cfg.enabled}</td>
-                    <td>${cfg.hasSecret}</td>
-                    <td>
-                        <button class="action" onclick='openSsoModal(${JSON.stringify(cfg)})'>Edit</button>
-                        <button class="action" onclick='revealSsoSecret(${cfg.id})'>Reveal Secret</button>
-                        <button class="action danger" onclick="deleteSso(${cfg.id})">Delete</button>
-                    </td></tr>`;
-                tbody.innerHTML += row;
-            });
-        } catch (e) { console.error(e); alert('Error loading SSO configs.'); }
-    }
-
-    function openSsoModal(config) {
-        currentEditSso = config;
-        if (config) {
-            document.getElementById('ssoModalTitle').textContent = 'Edit SSO Config';
-            document.getElementById('ssoIdInput').value = config.id;
-            document.getElementById('ssoProviderIdInput').value = config.providerId;
-            document.getElementById('ssoProviderIdInput').readOnly = true; // Cannot change providerId
-            document.getElementById('ssoTypeInput').value = config.type;
-            document.getElementById('ssoDisplayNameInput').value = config.displayName;
-            document.getElementById('ssoEnabledInput').value = config.enabled;
-            // Sanitize settings: add clientSecret placeholder, remove sensitive data
-            const settings = config.settings || {};
-            if (config.hasSecret) {
-                settings.clientSecret = "********** (hidden) - To change, enter a new secret";
-            }
-            document.getElementById('ssoSettingsInput').value = JSON.stringify(settings, null, 2);
-        } else {
-            document.getElementById('ssoModalTitle').textContent = 'Add SSO Config';
-            document.getElementById('ssoIdInput').value = '';
-            document.getElementById('ssoProviderIdInput').value = '';
-            document.getElementById('ssoProviderIdInput').readOnly = false;
-            document.getElementById('ssoTypeInput').value = 'OIDC';
-            document.getElementById('ssoDisplayNameInput').value = '';
-            document.getElementById('ssoEnabledInput').value = 'true';
-            document.getElementById('ssoSettingsInput').value = `{
-                "clientId": "",
-                "clientSecret": "",
-                "issuer": "https://your-idp.com/issuer-uri"}`; } openModal('ssoModal'); }
-            async function saveSsoConfig() {
-        const id = document.getElementById('ssoIdInput').value;
-        const isUpdate = !!id;
-        const method = isUpdate ? 'PUT' : 'POST';
-        const url = isUpdate ? `${apiBase}/sso-config/${id}` : `${apiBase}/sso-config`;
-
-        let settings;
-        try {
-            settings = JSON.parse(document.getElementById('ssoSettingsInput').value);
-            // If clientSecret is the placeholder, remove it so it's not sent
-            if (isUpdate && settings.clientSecret === "********** (hidden) - To change, enter a new secret") {
-                delete settings.clientSecret;
-            }
-        } catch (e) {
-            alert('Settings is not valid JSON.');
-            return;
-        }
-
-        const body = {
-            providerId: document.getElementById('ssoProviderIdInput').value,
-            type: document.getElementById('ssoTypeInput').value,
-            displayName: document.getElementById('ssoDisplayNameInput').value,
-            enabled: document.getElementById('ssoEnabledInput').value === 'true',
-            settings: settings
-        };
-
-        try {
-            const res = await fetch(url, {
-                method: method,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body)
-            });
-            if (!res.ok) throw new Error(await res.text());
-            closeModal('ssoModal');
-            loadSsoConfigs();
-        } catch (e) { console.error(e); alert('Error saving SSO Config: ' + e.message); }
-    }
-
-    async function deleteSso(id) {
-        if (confirm('Delete this SSO configuration? This is not reversible.')) {
-            try {
-                await fetch(`${apiBase}/sso-config/${id}`, { method: 'DELETE' });
-                loadSsoConfigs();
-            } catch (e) { console.error(e); alert('Error deleting SSO config.'); }
-        }
-    }
-
-    async function revealSsoSecret(id) {
-        try {
-            const res = await fetch(`${apiBase}/sso-config/${id}/reveal-secret`);
-            const data = await res.json();
-            if (data.error) throw new Error(data.error);
-            if (!data.secret) {
-                alert('This configuration has no secret stored.');
-            } else {
-                alert(`Revealed Secret:\n\n${data.secret}`);
-            }
-        } catch(e) {
-            alert('Failed to reveal secret: ' + e.message);
-        }
-    }
-
-    // Initial load
-    document.addEventListener('DOMContentLoaded', () => {
-        loadUsers();
-        loadSsoConfigs();
-        // Set active tab based on URL hash
-        const hash = window.location.hash.replace('#', '');
-        if (hash) {
-            const btn = document.querySelector(`button[data-tab="${hash}"]`);
-            if(btn) btn.click();
-        }
-    });
-</script>
 </body>
 </html>

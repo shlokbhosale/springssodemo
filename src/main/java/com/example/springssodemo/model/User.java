@@ -1,99 +1,77 @@
 package com.example.springssodemo.model;
 
 import jakarta.persistence.*;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-/**
- * ✅ Unified User entity.
- * Implements UserDetails so it can be used directly as the Spring Security Principal.
- */
 @Entity
 @Table(name = "users")
-public class User implements UserDetails {
+public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(unique = true, nullable = false)
     private String username;
 
-    @Column(nullable = false, unique = true)
-    private String email;
-
+    @Column(nullable = false)
     private String password;
 
+    // optional
+    private String email;
+
     @Column(nullable = false)
-    private String provider; // LOCAL, OAUTH2, SAML2
+    private String role = "USER";
 
-    private String firstName;
-    private String lastName;
-
-    private boolean enabled = true;
-
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
-    private Set<UserRole> userRoles = new HashSet<>();
-
-    // --- Constructors ---
+    // --- No-arg constructor (required by JPA) ---
     public User() {}
 
-    // --- UserDetails implementation ---- //
-
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        // Convert our Set<UserRole> to a Collection<GrantedAuthority>
-        return userRoles.stream()
-                .map(userRole -> new SimpleGrantedAuthority(userRole.getRole().getName()))
-                .collect(Collectors.toSet());
+    // --- Convenience constructors (match what controllers use) ---
+    // 3-arg: username, password, email
+    public User(String username, String password, String email) {
+        this.username = username;
+        this.password = password;
+        this.email = email;
     }
 
-    @Override
-    public String getPassword() { return password; }
-
-    @Override
-    public String getUsername() { return username; }
-
-    @Override
-    public boolean isAccountNonExpired() { return true; }
-
-    @Override
-    public boolean isAccountNonLocked() { return true; }
-
-    @Override
-    public boolean isCredentialsNonExpired() { return true; }
-
-    @Override
-    public boolean isEnabled() { return enabled; }
-
-    // --- Helper methods for roles ---
-    public void addRole(Role role) {
-        UserRole userRole = new UserRole();
-        userRole.setUser(this);
-        userRole.setRole(role);
-        userRoles.add(userRole);
+    // 3-arg variant: username, password, role
+    public User(String username, String password, String role, boolean byRole) {
+        this.username = username;
+        this.password = password;
+        this.role = role;
     }
 
-    // --- Standard Getters & Setters ---
+    // 4-arg: username, password, email, role
+    public User(String username, String password, String email, String role) {
+        this.username = username;
+        this.password = password;
+        this.email = email;
+        this.role = role;
+    }
+
+    // --- Getters & Setters ---
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
+
+    public String getUsername() { return username; }
     public void setUsername(String username) { this.username = username; }
+
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
+
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
-    public void setPassword(String password) { this.password = password; }
-    public String getProvider() { return provider; }
-    public void setProvider(String provider) { this.provider = provider; }
-    public String getFirstName() { return firstName; }
-    public void setFirstName(String firstName) { this.firstName = firstName; }
-    public String getLastName() { return lastName; }
-    public void setLastName(String lastName) { this.lastName = lastName; }
-    public void setEnabled(boolean enabled) { this.enabled = enabled; }
-    public Set<UserRole> getUserRoles() { return userRoles; }
-    public void setUserRoles(Set<UserRole> userRoles) { this.userRoles = userRoles; }
+
+    public String getRole() { return role; }
+    public void setRole(String role) { this.role = role; }
+
+    // optional: toString
+    @Override
+    public String toString() {
+        return "User{" +
+                "id=" + id +
+                ", username='" + username + '\'' +
+                ", email='" + email + '\'' +
+                ", role='" + role + '\'' +
+                '}';
+    }
 }

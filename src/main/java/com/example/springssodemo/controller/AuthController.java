@@ -1,52 +1,63 @@
 package com.example.springssodemo.controller;
 
-import com.example.springssodemo.dto.UserDto;
-import com.example.springssodemo.service.UserService;
-import com.example.springssodemo.exception.ConflictException;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.example.springssodemo.model.User;
+import com.example.springssodemo.repo.UserRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.*;
 import org.springframework.ui.Model;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
-import java.util.List;
-
-/**
- * Handles local authentication and registration logic.
- */
 @Controller
-@RequestMapping("/auth")
 public class AuthController {
 
-    @Autowired
-    private UserService userService;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+
+    public AuthController(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
+
+    // ✅ Redirect root to login
+    @GetMapping("/")
+    public String rootRedirect() {
+        return "redirect:/login";
+    }
+
+    // ✅ Show registration form
+    @GetMapping("/register")
+    public String registerPage() {
+        return "register";
+    }
 
     // ✅ Handle registration form submission
     @PostMapping("/register")
-    public String registerUser(@RequestParam String username,
-                               @RequestParam String email,
-                               @RequestParam String password,
-                               RedirectAttributes redirectAttributes) {
-        try {
-            UserDto userDto = new UserDto();
-            userDto.setUsername(username);
-            userDto.setEmail(email);
-            userDto.setPassword(password);
-            userDto.setProvider("LOCAL");
-            userDto.setRoles(List.of("ROLE_USER")); // Default to ROLE_USER
+    public String doRegister(@RequestParam String username,
+                             @RequestParam String password,
+                             @RequestParam String email,
+                             Model model) {
 
-            userService.create(userDto);
-
-            // Add success message for the login page
-            redirectAttributes.addFlashAttribute("success", "Registration successful! Please log in.");
-            return "redirect:/login?registered=true";
-
-        } catch (ConflictException e) {
-            redirectAttributes.addFlashAttribute("error", "Username already exists!");
-            return "redirect:/register";
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "An error occurred during registration.");
-            return "redirect:/register";
+        // Check if username already exists
+        if (userRepository.findByUsername(username).isPresent()) {
+            model.addAttribute("error", "⚠️ Username already exists!");
+            return "register";
         }
+
+        // ✅ Encode password properly
+        String encodedPassword = passwordEncoder.encode(password);
+
+        // ✅ Create new user with default role USER
+        User newUser = new User();
+        newUser.setUsername(username);
+        newUser.setPassword(encodedPassword);
+        newUser.setEmail(email);
+        newUser.setRole("USER"); // plain, DB me "USER" store hoga
+
+        userRepository.save(newUser);
+
+        model.addAttribute("message", "✅ Registered successfully! Please login.");
+        return "login";
     }
 }
